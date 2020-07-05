@@ -1,58 +1,108 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div id="game-zone">
+    <button class="btn btn-outline-primary position-absolute" style="top: 10px; right: 10px;" @click.prevent="fullscreen">Полноэкранный режим</button>
   </div>
 </template>
-
 <script>
+import * as PIXI from 'pixi.js'
+
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
+  data () {
+    return {
+      app: null,
+      circles: [],
+      speed: 5,
+      key: null,
+    }
+  },
+  methods: {
+    createPixiApp() {
+      this.app = new PIXI.Application({ resizeTo: document.documentElement });
+      document.getElementById("game-zone").appendChild(this.app.view);
+      PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+
+    },
+    createCircle() {
+      const graphics = new PIXI.Graphics();      
+      this.app.stage.addChild(graphics);
+      let center = this.randomCoord();
+      // let center = {x: 252, y: 133};
+      graphics.lineStyle(1, 0x00B25C, 1, 0);
+      graphics.beginFill()
+      graphics.drawCircle(center.x, center.y, 50);
+      graphics.endFill()
+      let circle = ({
+        id: this.circles.length ? this.circles[this.circles.length - 1].id + 1 : 1,
+        center: center,
+        graphics: graphics,
+      })
+      this.circles.push(circle)
+      circle.graphics.interactive = true;
+      circle.graphics.buttonMode = true;
+      circle.graphics.on("click", () => this.destroyCircle(circle.id))
+      this.moveCircle(circle.id);
+    },
+    moveCircle(id) {
+      let circle = this.circles.find((el) => {return el.id === id})
+      let oldCenter = circle.center;
+      let newCenter = this.randomCoord();
+      let step = {
+        x: (newCenter.x - oldCenter.x) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
+        y: (newCenter.y - oldCenter.y) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
+      }
+      this.app.ticker.add(() => {
+        if(this.circles.find((el) => {return el.id === id})) {
+          if ((newCenter.x >= oldCenter.x && circle.center.x >= newCenter.x || newCenter.x <= oldCenter.x && circle.center.x <= newCenter.x) &&
+          (newCenter.y >= oldCenter.y && circle.center.y >= newCenter.y || newCenter.y <= oldCenter.y && circle.center.y <= newCenter.y))
+          {
+            oldCenter = circle.center;
+            newCenter = this.randomCoord();
+            step = {
+              x: (newCenter.x - oldCenter.x) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
+              y: (newCenter.y - oldCenter.y) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
+            }
+          }
+          circle.graphics.clear();
+          circle.graphics.lineStyle(1, 0x00B25C, 1, 0);
+          circle.graphics.beginFill(0, 0.1)
+          circle.graphics.drawCircle(circle.center.x + step.x, circle.center.y + step.y, 50);
+          circle.graphics.endFill()
+          circle.center = {
+            x: circle.center.x + step.x,
+            y: circle.center.y + step.y,
+          }
+        }
+      })
+    },
+    destroyCircle(id) {
+      if(this.key == "q") {
+        let circle = this.circles.find(el => {return el.id === id})
+        circle.graphics.clear();
+        circle.graphics.destroy();
+        this.circles.splice(this.circles.indexOf(circle), 1);
+        this.key = null;
+      }
+    },
+    randomCoord() {
+      const x = 50 + Math.floor((document.documentElement.clientWidth - 50 - 50) * Math.random())
+      const y = 50 + Math.floor((document.documentElement.clientHeight - 50 - 50) * Math.random())
+      return {x: x, y: y};
+    },
+    init() {
+      this.createPixiApp();
+      this.createCircle();
+      this.createCircle();
+      this.createCircle();
+      this.createCircle();
+      document.documentElement.addEventListener("keydown", e => this.key = e.key  )
+    },
+    fullscreen() {
+      document.documentElement.requestFullscreen().catch(() => alert("Error"))
+    },
+  },
+  mounted() {
+    this.init();
+    
   }
 }
-</script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
+</script> 
