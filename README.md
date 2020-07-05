@@ -1,5 +1,4 @@
-# andrey
-
+# clicker
 ## Project setup
 ```
 yarn install
