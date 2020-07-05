@@ -11,13 +11,14 @@ export default {
     return {
       app: null,
       circles: [],
-      speed: 5,
-      key: null,
+      speed: 10,
+      overCircle: null,
+      lastId: 1
     }
   },
   methods: {
     createPixiApp() {
-      this.app = new PIXI.Application({ resizeTo: document.documentElement });
+      this.app = new PIXI.Application({ resizeTo: document.documentElement, antialias: true});
       document.getElementById("game-zone").appendChild(this.app.view);
       PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
@@ -27,19 +28,20 @@ export default {
       this.app.stage.addChild(graphics);
       let center = this.randomCoord();
       // let center = {x: 252, y: 133};
-      graphics.lineStyle(1, 0x00B25C, 1, 0);
+      graphics.lineStyle(3, 0x00B25C, 1, 0);
       graphics.beginFill()
       graphics.drawCircle(center.x, center.y, 50);
       graphics.endFill()
       let circle = ({
-        id: this.circles.length ? this.circles[this.circles.length - 1].id + 1 : 1,
+        id: this.lastId++,
         center: center,
         graphics: graphics,
       })
       this.circles.push(circle)
       circle.graphics.interactive = true;
       circle.graphics.buttonMode = true;
-      circle.graphics.on("click", () => this.destroyCircle(circle.id))
+      circle.graphics.on("mouseover", () => this.overCircle = circle.id)
+      circle.graphics.on("mouseout", () => this.overCircle = null)
       this.moveCircle(circle.id);
     },
     moveCircle(id) {
@@ -63,7 +65,7 @@ export default {
             }
           }
           circle.graphics.clear();
-          circle.graphics.lineStyle(1, 0x00B25C, 1, 0);
+          circle.graphics.lineStyle(3, 0x00B25C, 1, 0);
           circle.graphics.beginFill(0, 0.1)
           circle.graphics.drawCircle(circle.center.x + step.x, circle.center.y + step.y, 50);
           circle.graphics.endFill()
@@ -74,13 +76,14 @@ export default {
         }
       })
     },
-    destroyCircle(id) {
-      if(this.key == "q") {
+    destroyCircle(key) {
+      const id = this.overCircle;
+      if(key == "q" && id) {
         let circle = this.circles.find(el => {return el.id === id})
         circle.graphics.clear();
         circle.graphics.destroy();
         this.circles.splice(this.circles.indexOf(circle), 1);
-        this.key = null;
+        this.overCircle = null;
       }
     },
     randomCoord() {
@@ -90,11 +93,8 @@ export default {
     },
     init() {
       this.createPixiApp();
-      this.createCircle();
-      this.createCircle();
-      this.createCircle();
-      this.createCircle();
-      document.documentElement.addEventListener("keydown", e => this.key = e.key  )
+      setInterval(this.createCircle, 3000)
+      document.documentElement.addEventListener("keydown", e => this.destroyCircle(e.key)  )
     },
     fullscreen() {
       document.documentElement.requestFullscreen().catch(() => alert("Error"))
