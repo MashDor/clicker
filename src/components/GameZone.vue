@@ -38,7 +38,6 @@ export default {
       })
       this.circles.push(circle)
       circle.graphics.interactive = true;
-      circle.graphics.buttonMode = true;
       circle.graphics.on("mouseover", () => this.overCircle = circle.id)
       circle.graphics.on("mouseout", () => this.overCircle = null)
       this.moveCircle(circle.id);
@@ -92,6 +91,7 @@ export default {
     },
     init() {
       this.createPixiApp();
+      // this.createCircle()
       setInterval(this.createCircle, 1000)
       document.documentElement.addEventListener("keydown", e => this.destroyCircle(e.key)  )
     },
@@ -102,3 +102,8 @@ export default {
   }
 }
 </script> 
+<style scoped>
+  #game-zone {
+    cursor: url("../assets/cursor.png"), auto !important;
+  }
+</style>
