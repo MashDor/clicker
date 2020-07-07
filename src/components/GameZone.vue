@@ -4,6 +4,7 @@
 </template>
 <script>
 import * as PIXI from 'pixi.js'
+import { rotationAngle } from "../lib/custom_functions"
 
 export default {
   data () {
@@ -47,37 +48,45 @@ export default {
       let circle = this.circles.find((el) => {return el.id === id})
       let oldCenter = circle.center;
       let newCenter = this.randomCoord();
+      let pathLength = (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2)))
       let step = {
-        x: (newCenter.x - oldCenter.x) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
-        y: (newCenter.y - oldCenter.y) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
+        x: (newCenter.x - oldCenter.x) / pathLength * this.speed,
+        y: (newCenter.y - oldCenter.y) / pathLength * this.speed,
       }
+      let turning = 0;
       this.app.ticker.add(() => {
         if(this.circles.find((el) => {return el.id === id})) {
           if ((newCenter.x >= oldCenter.x && circle.center.x >= newCenter.x || newCenter.x <= oldCenter.x && circle.center.x <= newCenter.x) &&
-          (newCenter.y >= oldCenter.y && circle.center.y >= newCenter.y || newCenter.y <= oldCenter.y && circle.center.y <= newCenter.y))
+          (newCenter.y >= oldCenter.y && circle.center.y >= newCenter.y || newCenter.y <= oldCenter.y && circle.center.y <= newCenter.y) &&
+          turning == 0)
           {
-            oldCenter = circle.center;
             newCenter = this.randomCoord();
+            turning = Math.round(rotationAngle(oldCenter, circle.center, newCenter) / this.speed)
+            oldCenter = circle.center;
+            pathLength = (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2)))
             step = {
-              x: (newCenter.x - oldCenter.x) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
-              y: (newCenter.y - oldCenter.y) / (Math.sqrt(Math.pow((newCenter.x - oldCenter.x), 2) + Math.pow((newCenter.y - oldCenter.y), 2))) * this.speed,
+              x: (newCenter.x - oldCenter.x) / pathLength * this.speed,
+              y: (newCenter.y - oldCenter.y) / pathLength * this.speed,
             }
           }
-          circle.graphics.clear();
-          circle.graphics.lineStyle(3, 0x00B25C, 1, 0);
-          circle.graphics.beginFill(0, 0.1)
-          circle.graphics.drawCircle(circle.center.x + step.x, circle.center.y + step.y, 50);
-          circle.graphics.endFill()
-          circle.center = {
-            x: circle.center.x + step.x,
-            y: circle.center.y + step.y,
+          if (turning == 0) {
+            circle.graphics.clear();
+            circle.graphics.lineStyle(3, 0x00B25C, 1, 0);
+            circle.graphics.beginFill(0, 0.1)
+            circle.graphics.drawCircle(circle.center.x + step.x, circle.center.y + step.y, 50);
+            circle.graphics.endFill()
+            circle.center = {
+              x: circle.center.x + step.x,
+              y: circle.center.y + step.y,
+            }
           }
+          else turning--
         }
       })
     },
     destroyCircle(key) {
       const id = this.overCircle;
-      if(key == "q" && id) {
+      if((key == "q" || key == "й") && id) {
         let circle = this.circles.find(el => {return el.id === id})
         circle.graphics.clear();
         circle.graphics.destroy();
@@ -92,7 +101,8 @@ export default {
     },
     init() {
       this.createPixiApp();
-      setInterval(this.createCircle, 1000)
+      // this.createCircle()
+      setInterval(this.createCircle, 5000)
       document.documentElement.addEventListener("keydown", e => this.destroyCircle(e.key)  )
     },
   },
