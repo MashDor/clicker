@@ -1,5 +1,5 @@
 <template>
-  <div id="game-zone">
+  <div id="game-zone" :class="['game-zone', misclick ? 'game-zone_misclick' : '']">
   </div>
 </template>
 <script>
@@ -13,7 +13,8 @@ export default {
       circles: [],
       speed: 10,
       overCircle: null,
-      lastId: 1
+      lastId: 1,
+      misclick: false,
     }
   },
   methods: {
@@ -85,12 +86,17 @@ export default {
     },
     destroyCircle(key) {
       const id = this.overCircle;
-      if((key == "q" || key == "й") && id) {
-        let circle = this.circles.find(el => {return el.id === id})
-        circle.graphics.clear();
-        circle.graphics.destroy();
-        this.circles.splice(this.circles.indexOf(circle), 1);
-        this.overCircle = null;
+      if(key == "q" || key == "й") {
+        if (id) {
+          let circle = this.circles.find(el => {return el.id === id})
+          circle.graphics.clear();
+          circle.graphics.destroy();
+          this.circles.splice(this.circles.indexOf(circle), 1);
+          this.overCircle = null;
+        }
+        else {
+          this.misclick = true;
+        }
       }
     },
     randomCoord() {
@@ -108,11 +114,21 @@ export default {
   mounted() {
     this.init();
     
+  },
+  watch: {
+    misclick() {
+      setTimeout(() => {
+        this.misclick = false
+      }, 500)
+    }
   }
 }
 </script> 
 <style scoped>
-  #game-zone {
+  .game-zone {
     cursor: url("../assets/cursor.png"), auto !important;
+  }
+  .game-zone_misclick {
+    cursor: url("../assets/misclick_cursor.png"), auto !important;
   }
 </style>
