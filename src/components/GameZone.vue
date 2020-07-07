@@ -1,6 +1,5 @@
 <template>
   <div id="game-zone">
-    <button class="btn btn-outline-primary position-absolute" style="top: 10px; right: 10px;" @click.prevent="fullscreen">Полноэкранный режим</button>
   </div>
 </template>
 <script>
@@ -93,11 +92,8 @@ export default {
     },
     init() {
       this.createPixiApp();
-      setInterval(this.createCircle, 3000)
+      setInterval(this.createCircle, 1000)
       document.documentElement.addEventListener("keydown", e => this.destroyCircle(e.key)  )
-    },
-    fullscreen() {
-      document.documentElement.requestFullscreen().catch(() => alert("Error"))
     },
   },
   mounted() {

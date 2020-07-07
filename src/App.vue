@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-    <HelloWorld/>
+    <game-zone/>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import GameZone from './components/GameZone.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    GameZone
   }
 }
 </script>
